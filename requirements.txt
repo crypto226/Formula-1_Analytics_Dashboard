@@ -1,0 +1,6 @@
+requests
+pandas
+plotly
+open_api
+
+

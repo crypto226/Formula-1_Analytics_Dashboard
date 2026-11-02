@@ -170,6 +170,31 @@ def get_race_control(session_key):
     return response.json()
 
 
+# Jolpica F1 API
+JOLPICA_BASE_URL = "https://api.jolpi.ca/ergast/f1"
+
+
+def get_race_results(year, race_name):
+    url = f"{JOLPICA_BASE_URL}/{year}/results.json"
+
+    params = {"limit": 100}
+
+    response = requests.get(url, params=params, timeout=30)
+    response.raise_for_status()
+
+    data = response.json()
+
+    races = data["MRData"]["RaceTable"]["Races"]
+
+    # Find the selected Grand Prix
+    for race in races:
+        if race["raceName"].strip().lower() == race_name.strip().lower():
+            return race.get("Results", [])
+
+    return []
+
+
+
 
 if __name__ == "__main__":
 

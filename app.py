@@ -89,9 +89,28 @@ results = load_race_results(
 )
 
 if results:
-    results_df = pd.DataFrame([
-        {
+    @st.cache_data(ttl=3600)
+    def load_driver_details(session_key):
+        return get_session_drivers(session_key)
+
+    driver_details = load_driver_details(
+        selected_race["session_key"]
+    )
+
+    driver_lookup = {
+        str(driver["driver_number"]): driver
+        for driver in driver_details
+    }
+
+    results_data = []
+
+    for result in results:
+        driver_number = str(result.get("number", ""))
+        driver_info = driver_lookup.get(driver_number, {})
+
+        results_data.append({
             "Position": result.get("position"),
+            "Photo": driver_info.get("headshot_url"),
             "Driver": (
                 result["Driver"]["givenName"] + " " +
                 result["Driver"]["familyName"]
@@ -105,12 +124,18 @@ if results:
             "Time": result.get("Time", {}).get("time", "N/A"),
             "Fastest Lap": result.get("FastestLap", {})
                 .get("Time", {}).get("time", "N/A")
-        }
-        for result in results
-    ])
+        })
+
+    results_df = pd.DataFrame(results_data)
 
     st.dataframe(
         results_df,
+        column_config={
+            "Photo": st.column_config.ImageColumn(
+                "Driver Photo",
+                width="small"
+            )
+        },
         use_container_width=True,
         hide_index=True
     )
